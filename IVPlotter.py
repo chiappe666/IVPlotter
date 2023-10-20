@@ -1,3 +1,5 @@
+import hashlib
+from io import StringIO
 import dash
 import dash_bootstrap_components as dbc
 from dash import html, dcc, dash_table, callback, Output, Input, State
@@ -17,9 +19,9 @@ app.layout = dbc.Container(
         dbc.Container([html.Label(
             "Enter Plot Name:",
         ),
-        dbc.Input(
-            id="plot-name", type="text", value="My Plot", 
-        ),],fluid=True, style={"padding": "10px"}),
+            dbc.Input(
+            id="plot-name", type="text", value="My Plot",
+        ),], fluid=True, style={"padding": "10px"}),
         dcc.Upload(
             id="upload-data",
             children=html.Div(["Drag and Drop or ", html.A("Select Files")]),
@@ -38,15 +40,27 @@ app.layout = dbc.Container(
         ),
         dbc.Row(
             [
-                dbc.Col(dcc.Checklist(
-                    id="file-checklist",
-                    style={"padding": "10px", 'fontSize': '0.8em'},
-                ),width=3),
+                dbc.Col(
+                    [dbc.Row(
+                        dcc.Checklist(
+                            id="file-checklist",
+                            style={"padding": "10px", 'fontSize': '0.8em'},
+                        )
+                    ),
+                    dbc.Row(
+                        dbc.ButtonGroup([
+                            dbc.Button("Download as png", id="btn_png"),
+                            dbc.Button("Download as svg", id="btn_svg"),
+                            dbc.Button("Download as html", id="btn_html"),
+                        ], style={"padding": "10px"}),
+                    )], width=3
+                ),
                 dbc.Col(
                     id="output-data-upload",
                     width=9
                 ),
             ],),
+
         html.Div(children=[dash_table.DataTable(
             id="Table",
             style_data={
@@ -68,14 +82,9 @@ app.layout = dbc.Container(
                 'textAlign': 'center',
                 'height': '4rem',
                 "overflowX": "scroll",
-                'minWidth': '0px', 'width':'150px' ,'maxWidth': '180px',
+                'minWidth': '0px', 'width': '150px', 'maxWidth': '180px',
             }
-        )], style={"display": "block", "width":"95%", "margin": "0 auto"},),
-        dbc.ButtonGroup([
-            dbc.Button("Download as png", id="btn_png"),
-            dbc.Button("Download as svg", id="btn_svg"),
-            dbc.Button("Download as html", id="btn_html"),
-        ], style={"padding": "10px"}),
+        )], style={"display": "block", "width": "95%", "margin": "0 auto"},),
         dcc.Download(id="download-plot-png"),
         dcc.Download(id="download-plot-html"),
         dcc.Download(id="download-plot-svg"),
@@ -172,8 +181,6 @@ def to_float(s):
     except ValueError:
         return "Unset"
 
-import hashlib
-from io import StringIO
 
 def create_unique_string(io_string):
     """
@@ -199,6 +206,7 @@ def create_unique_string(io_string):
 
     # Return the hexadecimal representation
     return hex_digest
+
 
 def Hier(df):
     """
@@ -453,6 +461,7 @@ def export_png(n_clicks, plotname, fig_data):
         return data
     return None
 
+
 @callback(
     Output("download-plot-svg", "data"),
     Input("btn_svg", "n_clicks"),
@@ -464,8 +473,8 @@ def export_png(n_clicks, plotname, fig_data):
 def export_svg(n_clicks, plotname, fig_data):
     fig = go.Figure(fig_data)
     if n_clicks is not None:
-        # Generate the SVG image of the figure
-        fig_bytes = fig.to_image(format="svg")
+        # Generate the SVG image of the figure with width of 1000 pixels
+        fig_bytes = fig.to_image(format="svg", width=1000)
 
         # Encode the image bytes as base64
         base64_image = base64.b64encode(fig_bytes).decode("utf-8")
