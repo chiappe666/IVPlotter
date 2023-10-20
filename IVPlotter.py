@@ -73,10 +73,12 @@ app.layout = dbc.Container(
         )], style={"display": "block", "width":"95%", "margin": "0 auto"},),
         dbc.ButtonGroup([
             dbc.Button("Download as png", id="btn_png"),
-            dbc.Button("Download as html", id="btn_html"), 
+            dbc.Button("Download as svg", id="btn_svg"),
+            dbc.Button("Download as html", id="btn_html"),
         ], style={"padding": "10px"}),
         dcc.Download(id="download-plot-png"),
         dcc.Download(id="download-plot-html"),
+        dcc.Download(id="download-plot-svg"),
         dcc.Store(id="figure-store", storage_type="memory"),
         dcc.Store(id="dataframe-store", storage_type="memory"),
     ], fluid=True
@@ -446,6 +448,31 @@ def export_png(n_clicks, plotname, fig_data):
         # Prepare the data for download
         data = dict(
             content=base64_image, filename=f"{plotname}.png", base64=True, type="png"
+        )
+
+        return data
+    return None
+
+@callback(
+    Output("download-plot-svg", "data"),
+    Input("btn_svg", "n_clicks"),
+    State("plot-name", "value"),
+    State("figure-store", "data"),
+    prevent_initial_call=True,
+    allow_duplicates=True
+)
+def export_svg(n_clicks, plotname, fig_data):
+    fig = go.Figure(fig_data)
+    if n_clicks is not None:
+        # Generate the SVG image of the figure
+        fig_bytes = fig.to_image(format="svg")
+
+        # Encode the image bytes as base64
+        base64_image = base64.b64encode(fig_bytes).decode("utf-8")
+
+        # Prepare the data for download
+        data = dict(
+            content=base64_image, filename=f"{plotname}.svg", base64=True, type="svg"
         )
 
         return data
