@@ -44,7 +44,7 @@ app.layout = dbc.Container(
                     [dbc.Row(
                         dcc.Checklist(
                             id="file-checklist",
-                            style={"padding": "10px", 'fontSize': '0.8em'},
+                            style={"padding": "10px", 'fontSize': '0.93em'},
                         )
                     ),
                     dbc.Row(
@@ -53,11 +53,11 @@ app.layout = dbc.Container(
                             dbc.Button("Download as svg", id="btn_svg"),
                             dbc.Button("Download as html", id="btn_html"),
                         ], style={"padding": "10px"}),
-                    )], width=3
+                    )], sm=3, xl=5
                 ),
                 dbc.Col(
                     id="output-data-upload",
-                    width=9
+                    sm=9, xl=6
                 ),
             ],),
 
@@ -75,7 +75,9 @@ app.layout = dbc.Container(
             style_table={
                 "overflow": "scroll",
                 "display": "flex",
-                'minWidth': '100%'
+                'minWidth': '100%',
+                "padding": "10px",
+                
             },
             fixed_columns={"headers": True, "data": 1},
             style_header={
