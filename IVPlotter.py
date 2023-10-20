@@ -10,17 +10,16 @@ import io
 import names  # type: ignore
 import re
 # Initialize the app
-app = dash.Dash(__name__)
+app = dash.Dash()
 
-app.layout = html.Div(
+app.layout = dbc.Container(
     [
-        html.Div(
-            "Enter Plot Name:", style={"marginLeft": "10px", "marginRight": "0px"}
+        dbc.Container([html.Label(
+            "Enter Plot Name:",
         ),
         dbc.Input(
-            id="plot-name", type="text", value="My Plot", style={"margin": "0 auto"}
-        ),
-        dbc.Button("Plot", id="btn_plot"),
+            id="plot-name", type="text", value="My Plot", 
+        ),],fluid=True, style={"padding": "10px"}),
         dcc.Upload(
             id="upload-data",
             children=html.Div(["Drag and Drop or ", html.A("Select Files")]),
@@ -37,48 +36,52 @@ app.layout = html.Div(
             # Allow multiple files to be uploaded
             multiple=True,
         ),
-        dbc.Checklist(
-            id="file-checklist",
-            style={"padding": "10px"},
-        ),
         dbc.Row(
             [
+                dbc.Col(dcc.Checklist(
+                    id="file-checklist",
+                    style={"padding": "10px", 'fontSize': '0.8em'},
+                ),width=3),
                 dbc.Col(
                     id="output-data-upload",
-                    width=8,
+                    width=9
                 ),
-                dbc.Col(
-                        dash_table.DataTable(
-                            id="Table",
-                            style_data={
-                                "whiteSpace": "normal",
-                            },
-                            style_cell={
-                                "whiteSpace": "normal",
-                                "font-size": "0.6rem",
-                                "overflowX": "scroll",
-                                'minWidth': '0px', 'maxWidth': '180px',
-                            },
-                            style_table={
-                                "overflowX": "scroll",
-                            },
-                            fixed_columns={"headers": True, "data": 1},
-                        ),
-                    width=4,
-                ),
-            ],
-        ),
-        dbc.Button("Download as png", id="btn_png"),
-        dbc.Button("Download as html", id="btn_html"),
+            ],),
+        html.Div(children=[dash_table.DataTable(
+            id="Table",
+            style_data={
+                "whiteSpace": "normal",
+            },
+            style_cell={
+                "whiteSpace": "normal",
+                "font-size": "0.8rem",
+                "overflowX": "clip",
+                'maxWidth': '180px',
+            },
+            style_table={
+                "overflow": "scroll",
+                "display": "flex",
+                'minWidth': '100%'
+            },
+            fixed_columns={"headers": True, "data": 1},
+            style_header={
+                'textAlign': 'center',
+                'height': '4rem',
+                "overflowX": "scroll",
+                'minWidth': '0px', 'width':'150px' ,'maxWidth': '180px',
+            }
+        )], style={"display": "block", "width":"95%", "margin": "0 auto"},),
+        dbc.ButtonGroup([
+            dbc.Button("Download as png", id="btn_png"),
+            dbc.Button("Download as html", id="btn_html"), 
+        ], style={"padding": "10px"}),
         dcc.Download(id="download-plot-png"),
         dcc.Download(id="download-plot-html"),
         dcc.Store(id="figure-store", storage_type="memory"),
         dcc.Store(id="dataframe-store", storage_type="memory"),
-    ],
+    ], fluid=True
 )
 
-
-import pandas as pd
 
 class IVdata:
     """
@@ -167,6 +170,33 @@ def to_float(s):
     except ValueError:
         return "Unset"
 
+import hashlib
+from io import StringIO
+
+def create_unique_string(io_string):
+    """
+    Creates a unique string from an IOString.
+
+    Args:
+        io_string (io.StringIO): The IOString to create a unique string from.
+
+    Returns:
+        str: The unique string.
+    """
+    # Get the contents of the IOString
+    contents = io_string.getvalue()
+
+    # Create a hash object
+    hash_object = hashlib.sha256()
+
+    # Update the hash object with the contents of the IOString
+    hash_object.update(contents.encode())
+
+    # Get the hexadecimal representation of the hash
+    hex_digest = hash_object.hexdigest()
+
+    # Return the hexadecimal representation
+    return hex_digest
 
 def Hier(df):
     """
@@ -197,7 +227,7 @@ def Readivdat(rawdata, mname):
     data = []
     START = False
     FOOT = False
-    id = names.get_full_name()
+    id = create_unique_string(rawdata)
     metadata = []
     mlabel = []
     DUTID = ""
@@ -421,6 +451,7 @@ def export_png(n_clicks, plotname, fig_data):
         return data
     return None
 
+
 @callback(
     Output("download-plot-html", "data"),
     Input("btn_html", "n_clicks"),
@@ -442,5 +473,7 @@ def export_html(n_clicks, plotname, fig_data):
 
         return data
     return None
+
+
 if __name__ == "__main__":
     app.run(debug=True)
