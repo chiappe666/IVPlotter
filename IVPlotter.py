@@ -1,20 +1,14 @@
 import dash
 import dash_bootstrap_components as dbc
-from dash import Dash, html, dcc, dash_table, callback, Output, Input, State
-from ipywidgets.widgets.trait_types import date_from_json  # type: ignore
+from dash import html, dcc, dash_table, callback, Output, Input, State
 import plotly.express as px  # type: ignore
 import plotly.graph_objects as go  # type: ignore
 from plotly.subplots import make_subplots  # type: ignore
 import pandas as pd
 import base64
 import io
-import plotly.io as pio  # type: ignore
 import names  # type: ignore
-import json
 import re
-
-pd.options.plotting.backend = "plotly"
-external_stylesheets = "https://codepen.io/chriddyp/pen/bWLwgP.css"
 # Initialize the app
 app = dash.Dash(__name__)
 
