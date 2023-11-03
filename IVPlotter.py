@@ -1,5 +1,4 @@
 import hashlib
-from io import StringIO
 import dash
 import dash_bootstrap_components as dbc
 from dash import html, dcc, dash_table, callback, Output, Input, State
@@ -11,17 +10,26 @@ import base64
 import io
 import names  # type: ignore
 import re
+
 # Initialize the app
 app = dash.Dash()
 
 app.layout = dbc.Container(
     [
-        dbc.Container([html.Label(
-            "Enter Plot Name:",
+        dbc.Container(
+            [
+                html.Label(
+                    "Enter Plot Name:",
+                ),
+                dbc.Input(
+                    id="plot-name",
+                    type="text",
+                    value="My Plot",
+                ),
+            ],
+            fluid=True,
+            style={"padding": "10px"},
         ),
-            dbc.Input(
-            id="plot-name", type="text", value="My Plot",
-        ),], fluid=True, style={"padding": "10px"}),
         dcc.Upload(
             id="upload-data",
             children=html.Div(["Drag and Drop or ", html.A("Select Files")]),
@@ -41,58 +49,76 @@ app.layout = dbc.Container(
         dbc.Row(
             [
                 dbc.Col(
-                    [dbc.Row(
-                        dcc.Checklist(
-                            id="file-checklist",
-                            style={"padding": "10px", 'fontSize': '0.93em'},
-                        )
-                    ),
-                    dbc.Row(
-                        dbc.ButtonGroup([
-                            dbc.Button("Download as png", id="btn_png"),
-                            dbc.Button("Download as svg", id="btn_svg"),
-                            dbc.Button("Download as html", id="btn_html"),
-                        ], style={"padding": "10px"}),
-                    )], sm=3, xl=5
+                    [
+                        dbc.Row(
+                            dcc.Checklist(
+                                id="file-checklist",
+                                style={"padding": "10px", "fontSize": "0.93em"},
+                            )
+                        ),
+                    ],
+                    sm=3,
+                    xl=5,
                 ),
                 dbc.Col(
-                    id="output-data-upload",
-                    sm=9, xl=6
+                    [
+                        dbc.Row(id="output-data-upload"),
+                        dbc.Row(
+                            dbc.ButtonGroup(
+                                [
+                                    dbc.Button("Download as png", id="btn_png"),
+                                    dbc.Button("Download as svg", id="btn_svg"),
+                                    dbc.Button("Download as html", id="btn_html"),
+                                ],
+                                style={"padding": "10px"},
+                            ),
+                        ),
+                    ],
+                    sm=7,
+                    xl=5,
                 ),
-            ],),
-
-        html.Div(children=[dash_table.DataTable(
-            id="Table",
-            style_data={
-                "whiteSpace": "normal",
-            },
-            style_cell={
-                "whiteSpace": "normal",
-                "font-size": "0.8rem",
-                "overflowX": "clip",
-                'maxWidth': '180px',
-            },
-            style_table={
-                "overflow": "scroll",
-                "display": "flex",
-                'minWidth': '100%',
-                "padding": "10px",
-                
-            },
-            fixed_columns={"headers": True, "data": 1},
-            style_header={
-                'textAlign': 'center',
-                'height': '4rem',
-                "overflowX": "scroll",
-                'minWidth': '0px', 'width': '150px', 'maxWidth': '180px',
-            }
-        )], style={"display": "block", "width": "95%", "margin": "0 auto"},),
+            ],
+        ),
+        html.Div(
+            children=[
+                dash_table.DataTable(
+                    id="Table",
+                    style_data={
+                        "whiteSpace": "normal",
+                    },
+                    style_cell={
+                        "whiteSpace": "normal",
+                        "font-size": "0.8rem",
+                        "overflowX": "clip",
+                        "maxWidth": "180px",
+                    },
+                    style_table={
+                        "overflow": "scroll",
+                        "display": "flex",
+                        "minWidth": "100%",
+                        "padding": "10px",
+                    },
+                    fixed_columns={"headers": True, "data": 1},
+                    style_header={
+                        "textAlign": "center",
+                        "height": "4rem",
+                        "overflowX": "scroll",
+                        "minWidth": "0px",
+                        "width": "150px",
+                        "maxWidth": "180px",
+                    },
+                    export_format="xlsx",
+                )
+            ],
+            style={"display": "block", "width": "95%", "margin": "0 auto"},
+        ),
         dcc.Download(id="download-plot-png"),
         dcc.Download(id="download-plot-html"),
         dcc.Download(id="download-plot-svg"),
         dcc.Store(id="figure-store", storage_type="memory"),
         dcc.Store(id="dataframe-store", storage_type="memory"),
-    ], fluid=True
+    ],
+    fluid=True,
 )
 
 
@@ -159,8 +185,7 @@ class IVdata:
             The IVdata object to add.
         """
         self.data = pd.concat([self.data, IVdat.data], ignore_index=True)
-        self.metadata = pd.concat(
-            [self.metadata, IVdat.metadata], ignore_index=True)
+        self.metadata = pd.concat([self.metadata, IVdat.metadata], ignore_index=True)
 
     def to_json(self):
         """
@@ -220,8 +245,7 @@ def Hier(df):
     Returns:
         None
     """
-    df.set_index([df.groupby(level=0).cumcount(), df.index],
-                 append=True, inplace=True)
+    df.set_index([df.groupby(level=0).cumcount(), df.index], append=True, inplace=True)
 
     df.reset_index(level=[2], drop=True, inplace=True)
     return
@@ -273,8 +297,7 @@ def Readivdat(rawdata, mname):
             source_index = line.index("Source(") + len("Source(")
             output_index = line.index("Output(%):", source_index)
             end_index = line.index("/I(A):", output_index)
-            input_power = float(
-                line[output_index + len("Output(%):"): end_index])
+            input_power = float(line[output_index + len("Output(%):") : end_index])
             input_power_value = str(input_power) + "%"
         if FOOT:
             mdata = line.split(":")
@@ -444,7 +467,7 @@ def plot(value, plotname, dataframe_data):
     State("plot-name", "value"),
     State("figure-store", "data"),
     prevent_initial_call=True,
-    allow_duplicates=True
+    allow_duplicates=True,
 )
 def export_png(n_clicks, plotname, fig_data):
     fig = go.Figure(fig_data)
@@ -470,7 +493,7 @@ def export_png(n_clicks, plotname, fig_data):
     State("plot-name", "value"),
     State("figure-store", "data"),
     prevent_initial_call=True,
-    allow_duplicates=True
+    allow_duplicates=True,
 )
 def export_svg(n_clicks, plotname, fig_data):
     fig = go.Figure(fig_data)
@@ -496,7 +519,7 @@ def export_svg(n_clicks, plotname, fig_data):
     State("plot-name", "value"),
     State("figure-store", "data"),
     prevent_initial_call=True,
-    allow_duplicates=True
+    allow_duplicates=True,
 )
 def export_html(n_clicks, plotname, fig_data):
     fig = go.Figure(fig_data)
@@ -514,4 +537,4 @@ def export_html(n_clicks, plotname, fig_data):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)
